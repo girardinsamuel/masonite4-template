@@ -5,9 +5,19 @@ from masonite.auth import Sign
 import os
 from masonite.environment import LoadEnvironment
 from masonite.utils.structures import load
+from masonite.middleware import (
+    MiddlewareCapsule,
+    VerifyCsrfToken,
+    SessionMiddleware,
+    EncryptCookies,
+)
 
 
 class Kernel:
+
+    http_middleware = []
+    route_middleware = {"web": [EncryptCookies, SessionMiddleware, VerifyCsrfToken]}
+    
     def __init__(self, app):
         self.application = app
 
@@ -27,6 +37,9 @@ class Kernel:
     def register_routes(self):
         self.application.bind("routes.web", "routes.web")
 
+    def register_middleware(self):
+        self.application.make('middleware').add(self.route_middleware).add(self.http_middleware)
+
     def register_configurations(self):
         self.application.bind("config.location", "app/config")
         self.application.bind("config.application", "config.application")
@@ -43,6 +56,9 @@ class Kernel:
 
         self.application.bind("jobs.location", "app/jobs")
         self.application.bind("mailables.location", "app/mailables")
+        self.application.bind(
+            "server.runner", "masonite.commands.ServeCommand.main"
+        )
 
         key = load(self.application.make("config.application")).KEY
         self.application.bind("key", key)
