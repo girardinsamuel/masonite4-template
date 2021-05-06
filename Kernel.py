@@ -4,13 +4,15 @@ from masonite.storage import StorageCapsule
 from masonite.auth import Sign
 import os
 from masonite.environment import LoadEnvironment
-from masonite.utils.structures import load
+from masonite.utils.structures import load, load_routes
 from masonite.middleware import (
     MiddlewareCapsule,
     VerifyCsrfToken,
     SessionMiddleware,
     EncryptCookies,
 )
+
+from masonite.routes import Route
 
 
 class Kernel:
@@ -25,9 +27,9 @@ class Kernel:
         # Register routes
         self.load_environment()
         self.register_configurations()
+        self.register_middleware()
         self.register_routes()
         self.register_database()
-        self.register_controllers()
         self.register_templates()
         self.register_storage()
 
@@ -35,7 +37,13 @@ class Kernel:
         LoadEnvironment()
 
     def register_routes(self):
-        self.application.bind("routes.web", "routes.web")
+        Route.set_controller_module_location('app.controllers')
+
+        self.application.make('router').add(
+            Route.group(
+                load_routes("routes.web"), middleware="web"
+            )
+        )
 
     def register_middleware(self):
         self.application.make('middleware').add(self.route_middleware).add(self.http_middleware)
@@ -64,8 +72,6 @@ class Kernel:
         self.application.bind("key", key)
         self.application.bind("sign", Sign(key))
 
-    def register_controllers(self):
-        self.application.bind("controller.location", "app.controllers")
 
     def register_templates(self):
         self.application.bind("views.location", "templates/")
