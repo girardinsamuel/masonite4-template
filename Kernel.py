@@ -6,19 +6,27 @@ import os
 from masonite.environment import LoadEnvironment
 from masonite.utils.structures import load, load_routes
 from masonite.middleware import (
-    MiddlewareCapsule,
-    VerifyCsrfToken,
     SessionMiddleware,
     EncryptCookies,
 )
-
 from masonite.routes import Route
+
+
+from app.middlware.VerifyCsrfToken import VerifyCsrfToken
 
 
 class Kernel:
 
-    http_middleware = []
-    route_middleware = {"web": [EncryptCookies, SessionMiddleware, VerifyCsrfToken]}
+    http_middleware = [
+        EncryptCookies
+    ]
+
+    route_middleware = {
+        "web": [
+            SessionMiddleware, 
+            VerifyCsrfToken,
+        ],
+    }
     
     def __init__(self, app):
         self.application = app
@@ -41,7 +49,7 @@ class Kernel:
 
         self.application.make('router').add(
             Route.group(
-                load_routes("routes.web"), middleware="web"
+                load_routes("routes.web"), middleware=["web"]
             )
         )
 
@@ -63,7 +71,11 @@ class Kernel:
         self.application.bind("base_url", "http://localhost:8000")
 
         self.application.bind("jobs.location", "app/jobs")
+        self.application.bind("controller.location", "app.controllers")
+        self.application.bind("providers.location", "app/providers")
         self.application.bind("mailables.location", "app/mailables")
+        self.application.bind("listeners.location", "app/listeners")
+        self.application.bind("validation.location", "app/validation")
         self.application.bind(
             "server.runner", "masonite.commands.ServeCommand.main"
         )
@@ -113,10 +125,10 @@ class Kernel:
         storage.add_storage_assets(
             {
                 # folder          # template alias
-                "app/storage/static": "static/",
-                "app/storage/compiled": "static/",
-                "app/storage/uploads": "static/",
-                "app/storage/public": "/",
+                "storage/static": "static/",
+                "storage/compiled": "static/",
+                "storage/uploads": "static/",
+                "storage/public": "/",
             }
         )
         self.application.bind("storage_capsule", storage)
