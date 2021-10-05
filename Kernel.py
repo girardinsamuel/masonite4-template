@@ -8,6 +8,8 @@ from masonite.utils.structures import load, load_routes
 from masonite.middleware import (
     SessionMiddleware,
     EncryptCookies,
+    VerifyCsrfToken,
+    LoadUserMiddleware,
 )
 from masonite.routes import Route
 
@@ -24,7 +26,8 @@ class Kernel:
     route_middleware = {
         "web": [
             SessionMiddleware, 
-            VerifyCsrfToken,
+            LoadUserMiddleware, 
+            VerifyCsrfToken
         ],
     }
     
